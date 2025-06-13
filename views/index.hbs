@@ -1,14 +1,8 @@
 <div class="flex-bn">
-  <h1>Dashboard</h1>
+  <h1>Create lists</h1>
+
   <div class="flex-bn">
-    <button id="openFormBtn" class="btn-primary" type="button">Add Email</button>
-    <button id="runBtn" class="btn-primary" type="button">Run Automation</button>
-  </div>
-</div>
-
-<h3>{{emails.length}} Emails</h3>
-
-<div class="filter-container mb-20">
+    <div class="filter-container mb-20">
   <div class="filter-dropdown">
     <label for="daysFilter">Days:</label>
     <select id="daysFilter" class="filter-select">
@@ -28,6 +22,17 @@
     </select>
   </div>
 </div>
+
+    <button id="openFormBtn" class="btn-primary" type="button">Add Email</button>
+    <button id="runBtn" class="btn-primary" type="button">Run Automation</button>
+  </div>
+
+
+</div>
+
+<h4 class="emailCount mb-12">{{emails.length}} Emails</h4>
+
+
 
 {{#if hasEmails}}
   <div class="flex">
@@ -73,6 +78,54 @@
           </div>
         </div>
       </div>
+
+      {{!-- <div class="card">
+  <div class="card-header">
+    <h2 class="card-title">{{this.brand}}</h2>
+    <span class="card-tag">{{this.domain}} <strong>{{this.count}}</strong></span>
+  </div>
+
+  <p class="card-subtitle">{{this.campaign}}</p>
+
+  <div class="card-date">📅 <span class="js-date" data-iso="{{this.date}}"></span></div>
+
+  <div class="card-stats">
+    <div>
+      <label>Primary</label>
+      <span>{{this.primaryListId}}</span>
+    </div>
+    <div>
+      <label>Secondary</label>
+      <span>{{this.secondaryListId}}</span>
+    </div>
+    <div>
+      <label>Send</label>
+      <span>{{this.sendContactListId}}</span>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <span class="edit-date" data-date="{{this.createdAt}}"></span>
+    <div class="card-actions">
+      <button class="edit-btn" title="Edit"
+        data-id="{{this._id}}" 
+        data-campaign="{{this.campaign}}"
+        data-brand="{{this.brand}}"
+        data-count="{{this.count}}"
+        data-primary-list-id="{{this.primaryListId}}"
+        data-secondary-list-id="{{this.secondaryListId}}"
+        data-send-contact-list-id="{{this.sendContactListId}}"
+        data-list-percentage="{{this.listPercentage}}"
+        data-domain="{{this.domain}}"
+        data-date="{{this.date}}"><img src="/assets/edit-svgrepo-com.svg" width="14" height="14"></button>
+
+      <form action="/email/{{this._id}}?_method=DELETE" method="post">
+        <button type="submit" onclick="return confirm('Are you sure?')" title="Delete"><img src="/assets/delete-svgrepo-com.svg" width="14" height="14"></button>
+      </form>
+    </div>
+  </div>
+      </div> --}}
+
     {{/each}}
   </div>
 {{else}}
@@ -293,8 +346,8 @@
       });
       
       // Update email count display
-      const visibleCount = document.querySelectorAll('.card[style="display: block"]').length;
-      document.querySelector('h3').textContent = `${visibleCount} Emails (Filtered)`;
+      const visibleCount = document.querySelectorAll('.card[style="display: block;"]').length;
+      document.querySelector('h4').textContent = `${visibleCount} Emails`;
     }
     
     // Initialize with BAU filter

@@ -59,7 +59,7 @@ header .container {
 main {
   min-height:calc(100vh - 120px);
   margin: 40px 20px;
-  padding: 20px;
+  padding: 12px 20px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
@@ -112,6 +112,11 @@ footer {
 
 #delete-btn:hover {
   border-color: #f0920e;
+}
+
+.emailCount{
+  font-size:14px;
+  text-align: right;
 }
 
 /* === FLEX HELPERS === */
@@ -179,8 +184,6 @@ footer {
 
 .btns {
   padding: 3px;
-  background-color: #939a9a7c;
-  border-radius: 20px;
   gap:8px;
 }
 
@@ -255,6 +258,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 10px;
+  white-space: nowrap;
 }
 
 .filter-select {
@@ -283,7 +287,7 @@ form label {
 }
 
 form input,
-form textarea , form select{
+form textarea , form select, select{
   width: 100%;
   padding: 10px;
   margin-top: 5px;
@@ -291,6 +295,7 @@ form textarea , form select{
   border: 1px solid #ccc;
   font-size: 1em;
   box-sizing: border-box;
+  font-family: "Lexend", sans-serif;
 }
 
 form button[type="submit"] {
@@ -314,7 +319,6 @@ form button[type="submit"]:hover {
 /* === TYPOGRAPHY === */
 .dashboard h1, form h2 {
   color: #067be1;
-  margin-bottom: 8px;
 }
 
 .dashboard h3 {
