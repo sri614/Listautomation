@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="container">
+      <div class="logo">BO Emailer</div>
+      <nav class="navbar">
+        <a class="active" href="/">Dashboard</a>
+        <a href="/report">Report</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main dashboard">
+    {{{body}}}
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    &copy; 2025 BO Emailer. All rights reserved.
+  </footer>
+
+  <!-- ===== MODAL FUNCTIONALITY ===== -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("emailModal");
+      const openBtn = document.getElementById("openFormBtn");
+      const closeBtn = document.getElementById("closeModal");
+
+      if (openBtn && modal && closeBtn) {
+        openBtn.onclick = () => modal.style.display = "block";
+        closeBtn.onclick = () => modal.style.display = "none";
+        window.onclick = e => {
+          if (e.target === modal) modal.style.display = "none";
+        };
+      }
+    });
+  </script>
+
+</body>
+</html>
