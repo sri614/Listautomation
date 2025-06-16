@@ -36,7 +36,6 @@ router.get("/", async (req, res) => {
             hasEmails: emails.length > 0,
             isEdit:false,
             pageTitle: "dashboard",
-            bodyClass: "dashboard",
           });
       })
       .catch((error) => {

@@ -1,14 +1,8 @@
 <div class="flex-bn">
-  <h1>Dashboard</h1>
+  <h1>Create lists</h1>
+
   <div class="flex-bn">
-    <button id="openFormBtn" class="btn-primary" type="button">Add Email</button>
-    <button id="runBtn" class="btn-primary" type="button">Run Automation</button>
-  </div>
-</div>
-
-<h3>{{emails.length}} Emails</h3>
-
-<div class="filter-container mb-20">
+    <div class="filter-container mb-20">
   <div class="filter-dropdown">
     <label for="daysFilter">Days:</label>
     <select id="daysFilter" class="filter-select">
@@ -28,6 +22,17 @@
     </select>
   </div>
 </div>
+
+    <button id="openFormBtn" class="btn-primary" type="button">Add Email</button>
+    <button id="runBtn" class="btn-primary" type="button">Run Automation</button>
+  </div>
+
+
+</div>
+
+<h4 class="emailCount mb-12">{{emails.length}} Emails</h4>
+
+
 
 {{#if hasEmails}}
   <div class="flex">
@@ -73,6 +78,8 @@
           </div>
         </div>
       </div>
+
+
     {{/each}}
   </div>
 {{else}}
@@ -293,8 +300,8 @@
       });
       
       // Update email count display
-      const visibleCount = document.querySelectorAll('.card[style="display: block";]').length;
-      document.querySelector('h3').textContent = `${visibleCount} Emails (Filtered)`;
+      const visibleCount = document.querySelectorAll('.card[style="display: block;"]').length;
+      document.querySelector('h4').textContent = `${visibleCount} Emails`;
     }
     
     // Initialize with BAU filter
