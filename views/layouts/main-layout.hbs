@@ -13,10 +13,10 @@
     <div class="container">
       <div class="logo">BO Emailer</div>
       <nav class="navbar">
-        <a class="" href="/">Docs</a>
-        <a class="active" href="/">Create lists</a>
-        <a href="/api/cloner">Email Cloning</a>
-        <a href="/report">Report</a>
+        <a class="{{isActive activePage 'docs'}}" href="/">Docs</a>
+        <a class="{{isActive activePage 'create list'}}"  href="/">Create lists</a>
+        <a class="{{isActive activePage 'email cloning'}}" href="/api/cloner">Email Cloning</a>
+        <a class="{{isActive activePage 'report'}}" href="/report">Report</a>
       </nav>
     </div>
   </header>

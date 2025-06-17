@@ -13,8 +13,14 @@ app.use(express.static("public"));
 // override with POST having ?_method=DELETE
 app.use(methodOverride('_method'));
 
+
 //set template engine
-app.engine("hbs",engine({extname:".hbs",layoutDir:"views/layouts/",defaultLayout:"main-layout"}));
+app.engine("hbs",engine({extname:".hbs",layoutDir:"views/layouts/",defaultLayout:"main-layout", 
+    helpers: {
+      isActive: function (activePage, currentPage, options) {
+        return activePage === currentPage ? "active" : "";
+      }
+    },}));
 app.set("view engine","hbs");
 app.set("views","views");
 

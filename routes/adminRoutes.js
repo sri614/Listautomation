@@ -35,7 +35,8 @@ router.get("/", async (req, res) => {
             emails: JSON.parse(JSON.stringify(emails)),
             hasEmails: emails.length > 0,
             isEdit:false,
-            pageTitle: "dashboard",
+            pageTitle: "create list",
+            activePage:"create list",
           });
       })
       .catch((error) => {

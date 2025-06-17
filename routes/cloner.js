@@ -316,6 +316,7 @@ router.get("/cloner", async (req, res) => {
   try {
     res.status(200).render("cloner", {
       pageTitle: "Email cloning",
+       activePage:"email cloning",
     });
   } catch (error) {
     console.log(error);
