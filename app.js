@@ -25,6 +25,9 @@ app.use("/",adminRoutes);
 const hubspotListRoutes = require('./routes/hubspotRoute.js');
 app.use('/api', hubspotListRoutes);
 
+const ClonerRoutes = require('./routes/cloner.js');
+app.use('/api', ClonerRoutes);
+
 app.listen(process.env.PORT,()=>{
     console.log("server running on http://localhost:8000/");
 })
