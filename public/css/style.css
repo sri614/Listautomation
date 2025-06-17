@@ -416,9 +416,12 @@ form button[type="submit"]:hover {
 }
 
 
-.card{animation: slowRight 1 ease-out .8s;}
+.card,.emailCount{animation: slowRight 1 ease-out .8s;}
+.emailCount{animation-delay:.1s ;}
 .header__menu{animation: slowUp 1 ease-out .8s;}
 header{animation: slowUp 1 ease-out .6s;}
+
+
 @keyframes slowRight {
   0%{
     transform: translateX(150px);
