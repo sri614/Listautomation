@@ -7,7 +7,6 @@ const SegmentationSchema = new mongoose.Schema({
   primaryListId: { type: Number, required: true },
   secondaryListId: { type: Number},
   sendContactListId:{type: Number,required: true},
-  listPercentage: { type: Number, required: true },
   domain: { type: String, required: true },
   date: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },

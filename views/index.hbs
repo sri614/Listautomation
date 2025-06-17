@@ -68,7 +68,6 @@
               data-primary-list-id="{{this.primaryListId}}"
               data-secondary-list-id="{{this.secondaryListId}}"
               data-send-contact-list-id="{{this.sendContactListId}}"
-              data-list-percentage="{{this.listPercentage}}"
               data-domain="{{this.domain}}"
               data-date="{{this.date}}"><img src="/assets/edit-svgrepo-com.svg" width="14" height="14"></button>
 
@@ -109,9 +108,6 @@
 
       <label for="sendContactListId">Send Contacts List ID:</label>
       <input type="number" id="sendContactListId" name="sendContactListId" required/>
-
-      <label for="listPercentage">List Percentage:</label>
-      <input type="number" id="listPercentage" name="listPercentage" required />
 
       <label for="domain">Domain:</label>
       <select id="domain" name="domain" required>
@@ -225,22 +221,20 @@
     const primaryListIdInput = document.getElementById("primaryListId");
     const secondaryListIdInput = document.getElementById("secondaryListId");
     const sendContactListIdInput = document.getElementById("sendContactListId");
-    const listPercentageInput = document.getElementById("listPercentage");
     const domainInput = document.getElementById("domain");
     const dateInput = document.getElementById("date");
-
+ 
     document.querySelectorAll(".edit-btn").forEach(button => {
       button.addEventListener("click", () => {
         form.action = `/email/${button.dataset.id}/edit?_method=PUT`;
         formBtn.textContent = "Update";
-
+        
         campaignInput.value = button.dataset.campaign;
         brandInput.value = button.dataset.brand;
         countInput.value = button.dataset.count;
         primaryListIdInput.value = button.dataset.primaryListId;
         secondaryListIdInput.value = button.dataset.secondaryListId;
         sendContactListIdInput.value = button.dataset.sendContactListId;
-        listPercentageInput.value = button.dataset.listPercentage;
         domainInput.value = button.dataset.domain;
         dateInput.value = button.dataset.date;
 
@@ -257,7 +251,7 @@
       filter.addEventListener('change', applyFilters);
     });
     
-    function applyFilters() {
+    function applyFilters(){
       const selectedDay = daysFilter.value;
       const selectedMode = modeFilter.value.toLowerCase();
       const today = new Date();
