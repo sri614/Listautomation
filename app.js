@@ -19,6 +19,10 @@ app.engine("hbs",engine({extname:".hbs",layoutDir:"views/layouts/",defaultLayout
     helpers: {
       isActive: function (activePage, currentPage, options) {
         return activePage === currentPage ? "active" : "";
+      },
+      isType: function (isMain, currentType, options) {
+        isMain = currentType.toLowerCase().includes("main");
+        return isMain ? "mainStyle" : "subStyle";
       }
     },}));
 app.set("view engine","hbs");

@@ -1,4 +1,4 @@
-<div class="flex-bn">
+<div class="flex-bn header__menu">
   <h1>Create lists</h1>
 
   <div class="flex-bn">
@@ -37,7 +37,7 @@
 {{#if hasEmails}}
   <div class="flex">
     {{#each emails}}
-      <div class="card">
+      <div class="card {{isType isMain this.domain}}">
         <div class="flex-bn flex-bn--alignTop mb-12">
           <div>
             <p class="brand" title="brand">{{this.brand}}</p>
@@ -187,6 +187,10 @@
     // Short campaign name
     document.querySelectorAll(".campaign").forEach(el => {
       el.textContent = `${el.textContent.slice(0,18)}`;
+    });
+
+     document.querySelectorAll(".box").forEach(el => {
+      console.log(el.firstChild)
     });
 
     // Format display dates
