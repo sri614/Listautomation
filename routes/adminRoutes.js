@@ -28,7 +28,7 @@ router.get("/", async (req, res) => {
     // CreatedList.find().then((list)=> console.log(list))
     Segmentation.find()
       .then((emails) => {
-        console.log(emails);
+        // console.log(emails);
         res
           .status(200)
           .render("index", {

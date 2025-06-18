@@ -402,7 +402,7 @@ form button[type="submit"]:hover {
   background-color: rgba(0, 195, 249, 0.244);
 }
 .mainStyle,.subStyle{transition: transform .3s ease-out}
-.mainStyle:hover,.subStyle:hover{transform:translateZ(-5px) scale(1.1);}
+.mainStyle:hover,.subStyle:hover{transform:translateY(-5px)}
 
 .subStyle::before{
   content: "";

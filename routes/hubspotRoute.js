@@ -9,7 +9,6 @@ const CreatedList = require('../models/list');
 const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 const HUBSPOT_PORTAL_ID = process.env.HUBSPOT_PORTAL_ID;
 const CONCURRENCY_LIMIT = parseInt(process.env.HUBSPOT_CONCURRENCY_LIMIT) || 3;
-const BATCH_SIZE = parseInt(process.env.HUBSPOT_BATCH_SIZE) || 1000;
 const RETRIEVAL_BATCH_SIZE = parseInt(process.env.HUBSPOT_RETRIEVAL_BATCH_SIZE) || 1000;
 const MAX_RETRIES = parseInt(process.env.HUBSPOT_MAX_RETRIES) || 3;
 
@@ -28,7 +27,6 @@ const getFormattedDate = (dateInput) => {
 const getFilteredDate = (daysFilter) => {
   const now = new Date();
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  
   if (daysFilter === 'today') {
     return today.toISOString().split('T')[0];
   } else if (daysFilter === 't+1') {
@@ -51,6 +49,20 @@ const chunkArray = (arr, size) => {
   return chunks;
 };
 
+const progressiveChunks = (arr, sizes = [300, 100, 50, 1]) => {
+  const result = [];
+  let index = 0;
+  for (const size of sizes) {
+    while (index < arr.length) {
+      const chunk = arr.slice(index, index + size);
+      if (!chunk.length) break;
+      result.push(chunk);
+      index += size;
+    }
+  }
+  return result;
+};
+
 const getContactsFromList = async (listId, maxCount = Infinity) => {
   let allContacts = [];
   let hasMore = true;
@@ -60,35 +72,31 @@ const getContactsFromList = async (listId, maxCount = Infinity) => {
   while (hasMore && retryCount < MAX_RETRIES && allContacts.length < maxCount) {
     try {
       const countToFetch = Math.min(RETRIEVAL_BATCH_SIZE, maxCount - allContacts.length);
+      console.log(`🔍 Fetching contacts from list: ${listId} | So far: ${allContacts.length}`);
       const res = await axios.get(
         `https://api.hubapi.com/contacts/v1/lists/${listId}/contacts/all`,
         {
           headers: hubspotHeaders,
-          params: { 
+          params: {
             count: countToFetch,
-            vidOffset: offset 
+            vidOffset: offset
           }
         }
       );
-      
+
       const contacts = res.data.contacts || [];
       allContacts.push(...contacts.map(c => c.vid));
       hasMore = res.data['has-more'] && allContacts.length < maxCount;
       offset = res.data['vid-offset'];
       retryCount = 0;
 
-      if (allContacts.length % 5000 === 0) {
-        console.log(`Retrieved ${allContacts.length}/${maxCount} contacts from list ${listId}`);
-      }
-      
       if (allContacts.length >= maxCount) {
         allContacts = allContacts.slice(0, maxCount);
         break;
       }
     } catch (error) {
-      console.error(`Error getting contacts from list ${listId}:`, error.message);
+      console.error(`⚠️ Error on attempt ${retryCount} for list ${listId}:`, error.message);
       retryCount++;
-      
       if (retryCount < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, 1000 * retryCount));
       } else {
@@ -97,27 +105,23 @@ const getContactsFromList = async (listId, maxCount = Infinity) => {
     }
   }
 
-  console.log(`Retrieved ${allContacts.length} contacts from list ${listId}`);
   return allContacts;
 };
 
 const createHubSpotList = async (name) => {
-  try {
-    const res = await axios.post(
-      'https://api.hubapi.com/contacts/v1/lists',
-      { name, dynamic: false },
-      { headers: hubspotHeaders }
-    );
-    return res.data;
-  } catch (error) {
-    console.error('Error creating list:', error.message);
-    throw error;
-  }
+  console.log(`📝 Creating new HubSpot list: ${name}`);
+  const res = await axios.post(
+    'https://api.hubapi.com/contacts/v1/lists',
+    { name, dynamic: false },
+    { headers: hubspotHeaders }
+  );
+  return res.data;
 };
 
 const addContactsToList = async (listId, contacts) => {
-  const chunks = chunkArray(contacts, BATCH_SIZE);
-  
+  console.log(`📤 Adding ${contacts.length} contacts to list ${listId}`);
+  const chunks = progressiveChunks(contacts);
+
   for (const chunk of chunks) {
     try {
       await axios.post(
@@ -125,215 +129,163 @@ const addContactsToList = async (listId, contacts) => {
         { vids: chunk },
         { headers: hubspotHeaders }
       );
-      console.log(`➕ Added ${chunk.length} contacts to list ${listId}`);
+      console.log(`   → Chunk of ${chunk.length} added`);
     } catch (error) {
-      console.error(`Failed to add batch to list ${listId}:`, error.message);
-      
-      // If batch fails, try splitting into smaller chunks
-      if (chunk.length > 100) {
-        const smallerChunks = chunkArray(chunk, 100);
-        for (const smallChunk of smallerChunks) {
-          try {
-            await axios.post(
-              `https://api.hubapi.com/contacts/v1/lists/${listId}/add`,
-              { vids: smallChunk },
-              { headers: hubspotHeaders }
-            );
-            console.log(`➕ Added ${smallChunk.length} contacts (retry)`);
-          } catch (retryError) {
-            console.error('Failed even with smaller batch:', retryError.message);
-          }
-          await new Promise(r => setTimeout(r, 200));
-        }
-      }
+      console.error(`Failed to add contacts to list ${listId}:`, error.message);
     }
     await new Promise(r => setTimeout(r, 200));
   }
 };
 
-const processSingleCampaign = async (config, daysFilter, modeFilter) => {
-  const {
-    brand, campaign, primaryListId, secondaryListId,
-    count, domain, date, sendContactListId
-  } = config;
+// ✅ Updated: Batch update recent_marketing_email_sent_date
+const updateRecentDate = async (contactIds, dateValue) => {
+  const epochMidnight = new Date(dateValue);
+  epochMidnight.setUTCHours(0, 0, 0, 0);
+  const epochTime = epochMidnight.getTime();
+  console.log(`🕓 Batch updating 'recent_marketing_email_sent_date' for ${contactIds.length} contacts to ${dateValue} (${epochTime})`);
 
-  try {
-    console.log(`\n📦 Processing campaign: ${campaign} (${brand}) - Target: ${count} contacts`);
+  const chunks = chunkArray(contactIds, 100); // HubSpot limit
 
-    // First try to get exactly 'count' contacts from primary list
-    let contacts = await getContactsFromList(primaryListId, count);
-
-    // If we didn't get enough and there's a secondary list
-    if (contacts.length < count && secondaryListId) {
-      const needed = count - contacts.length;
-      console.log(`🔁 Need ${needed} more contacts from secondary list`);
-      const secondaryContacts = await getContactsFromList(secondaryListId, needed);
-      contacts = contacts.concat(secondaryContacts);
-    }
-
-    // Final check if we got enough contacts
-    const selectedContacts = contacts.slice(0, count);
-    if (selectedContacts.length < count) {
-      console.warn(`⚠️ Only got ${selectedContacts.length}/${count} contacts`);
-    }
-
-    const formattedDate = getFormattedDate(date);
-    const listName = `${brand} - ${campaign} - ${domain} - ${formattedDate}`;
-    
-    // Create list and add contacts in parallel
-    const [newList] = await Promise.all([
-      createHubSpotList(listName),
-      selectedContacts.length ? addContactsToList(sendContactListId, selectedContacts) : Promise.resolve()
-    ]);
-
-    if (selectedContacts.length) {
-      await addContactsToList(newList.listId, selectedContacts);
-      console.log(`✅ Added ${selectedContacts.length} contacts to new list`);
-    }
-
-    await CreatedList.create({
-      name: listName,
-      listId: newList.listId,
-      createdDate: new Date(),
-      filterCriteria: { days: daysFilter, mode: modeFilter },
-      campaignDetails: { brand, campaign, date },
-      contactCount: selectedContacts.length,
-      requestedCount: count
-    });
-
-    return { 
-      success: true, 
-      listName, 
-      listId: newList.listId,
-      contactCount: selectedContacts.length,
-      requestedCount: count
+  for (const chunk of chunks) {
+    const payload = {
+      inputs: chunk.map(vid => ({
+        id: vid.toString(),
+        properties: {
+          recent_marketing_email_sent_date: epochTime
+        }
+      }))
     };
-  } catch (error) {
-    console.error(`❌ Failed campaign "${campaign}":`, error.message);
-    return { success: false, error: error.message };
+
+    try {
+      await axios.post(
+        'https://api.hubapi.com/crm/v3/objects/contacts/batch/update',
+        payload,
+        { headers: hubspotHeaders }
+      );
+      console.log(`✅ Successfully updated ${chunk.length} contacts`);
+    } catch (err) {
+      console.error(`❌ Failed batch update for chunk:`, err.response?.data || err.message);
+    }
+
+    await new Promise(r => setTimeout(r, 300));
   }
+};
+
+const processSingleCampaign = async (config, daysFilter, modeFilter) => {
+  const { brand, campaign, primaryListId, secondaryListId, count, domain, date, sendContactListId } = config;
+
+  console.log(`🚀 Processing campaign: ${campaign} | Brand: ${brand} | Domain: ${domain}`);
+
+  let contacts = await getContactsFromList(primaryListId, count);
+  if (contacts.length < count && secondaryListId) {
+    const needed = count - contacts.length;
+    const secondaryContacts = await getContactsFromList(secondaryListId, needed);
+    contacts = contacts.concat(secondaryContacts);
+  }
+
+  const selectedContacts = contacts.slice(0, count);
+  console.log(`🔢 Selected ${selectedContacts.length} contacts out of requested ${count}`);
+
+  const formattedDate = getFormattedDate(date);
+  const listName = `${brand} - ${campaign} - ${domain} - ${formattedDate}`;
+
+  const [newList] = await Promise.all([
+    createHubSpotList(listName),
+    selectedContacts.length ? addContactsToList(sendContactListId, selectedContacts) : Promise.resolve()
+  ]);
+
+  if (selectedContacts.length) {
+    await addContactsToList(newList.listId, selectedContacts);
+    await updateRecentDate(selectedContacts, date);
+  }
+
+  await CreatedList.create({
+    name: listName,
+    listId: newList.listId,
+    createdDate: new Date(),
+    filterCriteria: { days: daysFilter, mode: modeFilter },
+    campaignDetails: { brand, campaign, date },
+    contactCount: selectedContacts.length,
+    requestedCount: count
+  });
+
+  console.log(`✅ Saved new list record: ${listName} (${selectedContacts.length} contacts)`);
+
+  return {
+    success: true,
+    listName,
+    listId: newList.listId,
+    contactCount: selectedContacts.length,
+    requestedCount: count
+  };
 };
 
 const processCampaignsInParallel = async (listConfigs, daysFilter, modeFilter) => {
   const results = [];
   const batches = chunkArray(listConfigs, CONCURRENCY_LIMIT);
-  
+
+  console.log(`📦 Processing ${listConfigs.length} campaigns in batches of ${CONCURRENCY_LIMIT}`);
+
   for (const batch of batches) {
+    console.log(`   → Processing batch of ${batch.length} campaigns...`);
     const batchPromises = batch.map(config => processSingleCampaign(config, daysFilter, modeFilter));
     const batchResults = await Promise.allSettled(batchPromises);
     results.push(...batchResults);
-    
-    if (batches.length > 1) {
-      await new Promise(r => setTimeout(r, 1000));
-    }
+    await new Promise(r => setTimeout(r, 1000));
   }
-  
+
   return results;
 };
 
 router.post('/create-lists', async (req, res) => {
   const { daysFilter, modeFilter } = req.body;
+  console.log(`📨 Received request to create lists | Filter: ${daysFilter}, Mode: ${modeFilter}`);
+  let query = {};
 
-  try {
-    // Build query with proper date filtering
-    let query = {};
-    
-    if (daysFilter && daysFilter !== 'all') {
-      const filterDate = getFilteredDate(daysFilter);
-      if (!filterDate) return res.status(400).json({ error: 'Invalid date filter' });
-      query.date = filterDate;
-    }
-
-    // Mode filter
-    if (modeFilter && modeFilter !== 'BAU') {
-      query.campaign = { $regex: modeFilter === 're-engagement' ? /re-engagement/i : /re-activation/i };
-    } else if (modeFilter === 'BAU') {
-      query.$and = [
-        { $or: [
-          { campaign: { $not: { $regex: /re-engagement/i } } },
-          { campaign: { $exists: false } }
-        ]},
-        { $or: [
-          { campaign: { $not: { $regex: /re-activation/i } } },
-          { campaign: { $exists: false } }
-        ]}
-      ];
-    }
-
-    console.log('\n======== DEBUG INFO ========');
-    console.log('System date:', new Date().toISOString());
-    console.log('Today (UTC):', new Date(Date.UTC(
-      new Date().getFullYear(), 
-      new Date().getMonth(), 
-      new Date().getDate()
-    )).toISOString().split('T')[0]);
-    console.log('Filter criteria:', { daysFilter, modeFilter });
-    console.log('Computed filter date:', getFilteredDate(daysFilter));
-    console.log('MongoDB query:', JSON.stringify(query, null, 2));
-    
-    const listConfigs = await Segmentation.find(query).lean();
-    console.log('Matching campaigns:', listConfigs.map(c => ({
-      campaign: c.campaign,
-      date: c.date,
-      brand: c.brand,
-      count: c.count
-    })));
-    console.log('============================\n');
-
-    if (!listConfigs.length) {
-      return res.status(404).json({ 
-        error: 'No campaigns match the selected filters',
-        details: { daysFilter, modeFilter }
-      });
-    }
-
-    // Respond immediately
-    res.json({ 
-      message: '🚀 List creation started in background',
-      count: listConfigs.length,
-      firstCampaign: listConfigs[0]?.campaign || 'None',
-      totalContactsRequested: listConfigs.reduce((sum, c) => sum + c.count, 0)
-    });
-
-    // Process in background
-    const results = await processCampaignsInParallel(listConfigs, daysFilter, modeFilter);
-
-    // Generate summary
-    const successes = results.filter(r => r.status === 'fulfilled' && r.value.success);
-    const failures = results.filter(r => r.status === 'rejected' || !r.value.success);
-    
-    const totalRequested = listConfigs.reduce((sum, c) => sum + c.count, 0);
-    const totalAdded = successes.reduce((sum, r) => sum + r.value.contactCount, 0);
-    
-    console.log('\n🎉 List creation summary:');
-    console.log(`✅ ${successes.length} successful (${totalAdded}/${totalRequested} contacts)`);
-    console.log(`❌ ${failures.length} failed`);
-    
-    if (successes.length) {
-      console.log('\nCreated lists:');
-      successes.forEach((result, i) => {
-        const { value } = result;
-        const countStatus = value.contactCount === value.requestedCount ? 
-          `✅ Exact count` : `⚠️ Got ${value.contactCount}/${value.requestedCount}`;
-        console.log(`${i+1}. ${value.listName}`);
-        console.log(`   ${countStatus} | 🔗 https://app.hubspot.com/contacts/${HUBSPOT_PORTAL_ID}/lists/${value.listId}`);
-      });
-    }
-
-  } catch (error) {
-    console.error('Error in list creation:', error);
-    res.status(500).json({ 
-      error: 'Failed to start list creation process',
-      details: error.message
-    });
+  if (daysFilter && daysFilter !== 'all') {
+    const filterDate = getFilteredDate(daysFilter);
+    if (!filterDate) return res.status(400).json({ error: 'Invalid date filter' });
+    query.date = filterDate;
   }
+
+  if (modeFilter && modeFilter !== 'BAU') {
+    query.campaign = { $regex: modeFilter === 're-engagement' ? /re-engagement/i : /re-activation/i };
+  } else if (modeFilter === 'BAU') {
+    query.$and = [
+      { $or: [{ campaign: { $not: { $regex: /re-engagement/i } } }, { campaign: { $exists: false } }] },
+      { $or: [{ campaign: { $not: { $regex: /re-activation/i } } }, { campaign: { $exists: false } }] }
+    ];
+  }
+
+  const listConfigs = await Segmentation.find(query).lean();
+  if (!listConfigs.length) {
+    return res.status(404).json({ error: 'No campaigns match the selected filters' });
+  }
+
+  res.json({
+    message: '🚀 List creation started in background',
+    count: listConfigs.length,
+    firstCampaign: listConfigs[0]?.campaign || 'None',
+    totalContactsRequested: listConfigs.reduce((sum, c) => sum + c.count, 0)
+  });
+
+  console.log(`⏳ Starting background list creation for ${listConfigs.length} campaigns...`);
+
+  const results = await processCampaignsInParallel(listConfigs, daysFilter, modeFilter);
+  const successes = results.filter(r => r.status === 'fulfilled' && r.value.success);
+  const failures = results.filter(r => r.status === 'rejected' || !r.value.success);
+
+  console.log(`✅ ${successes.length} campaigns processed successfully`);
+  console.log(`❌ ${failures.length} campaigns failed`);
 });
 
 router.get('/created-lists', async (req, res) => {
   try {
+    console.log('📄 Fetching created lists from DB...');
     const lists = await CreatedList.find().sort({ createdDate: -1 }).lean();
     res.json(lists);
   } catch (error) {
+    console.error('❌ Failed to fetch created lists:', error.message);
     res.status(500).json({ error: 'Failed to fetch created lists' });
   }
 });
