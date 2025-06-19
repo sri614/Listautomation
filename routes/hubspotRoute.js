@@ -162,7 +162,7 @@ const updateRecentDate = async (contactIds, dateValue) => {
         payload,
         { headers: hubspotHeaders }
       );
-      console.log(`✅ Successfully updated ${chunk.length} contacts`);
+      // console.log(`✅ Successfully updated ${chunk.length} contacts`);
     } catch (err) {
       console.error(`❌ Failed batch update for chunk:`, err.response?.data || err.message);
     }
@@ -195,6 +195,7 @@ const processSingleCampaign = async (config, daysFilter, modeFilter) => {
   ]);
 
   if (selectedContacts.length) {
+    console.log(newList)
     await addContactsToList(newList.listId, selectedContacts);
     await updateRecentDate(selectedContacts, date);
   }
@@ -281,8 +282,19 @@ router.post('/create-lists', async (req, res) => {
 
 router.get('/created-lists', async (req, res) => {
   try {
-    console.log('📄 Fetching created lists from DB...');
-    const lists = await CreatedList.find().sort({ createdDate: -1 }).lean();
+   
+const now = new Date();
+const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+const endOfDay = new Date(startOfDay);
+endOfDay.setUTCDate(startOfDay.getUTCDate() + 1);
+
+const lists = await CreatedList.find({
+  //fetch current date list only
+  // createdDate: {
+  //   $gte: startOfDay,
+  //   $lt: endOfDay
+  // }
+}).sort({ createdDate: -1 }).lean();
     res.json(lists);
   } catch (error) {
     console.error('❌ Failed to fetch created lists:', error.message);

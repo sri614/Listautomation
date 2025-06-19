@@ -26,6 +26,17 @@ router.post("/add-email", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     // CreatedList.find().then((list)=> console.log(list))
+   const now = new Date();
+const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+const endOfDay = new Date(startOfDay);
+endOfDay.setUTCDate(startOfDay.getUTCDate() + 1);
+
+const lists = await CreatedList.find({
+  createdDate: {
+    $gte: startOfDay,
+    $lt: endOfDay
+  }
+}).sort({ createdDate: -1 }).lean();
     Segmentation.find()
       .then((emails) => {
         // console.log(emails);
@@ -34,6 +45,8 @@ router.get("/", async (req, res) => {
           .render("index", {
             emails: JSON.parse(JSON.stringify(emails)),
             hasEmails: emails.length > 0,
+            lists: JSON.parse(JSON.stringify(lists)),
+            hasLists: lists.length > 0,
             isEdit:false,
             pageTitle: "create list",
             activePage:"create list",

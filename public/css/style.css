@@ -290,7 +290,7 @@ form label {
 }
 
 form input,
-form textarea , form select, select{
+form textarea , form select, select, .searchInput{
   width: 100%;
   padding: 10px;
   margin-top: 5px;
@@ -300,6 +300,7 @@ form textarea , form select, select{
   box-sizing: border-box;
   font-family: "Lexend", sans-serif;
 }
+.searchInput{padding:5px;}
 
 form button[type="submit"] {
   margin-top: 25px;
@@ -442,4 +443,37 @@ header{animation: slowUp 1 ease-out .6s;}
     transform: translateY(0px);
     opacity: 1;
   }
+}
+.heading{font-size:16px;font-weight: 700;padding:6px 4px;color: #f6fbff;}
+div .sticky{position: sticky;top:0;background-color: rgb(28, 104, 203);z-index: 1;}
+.list{font-size:12px;padding:5px;border-radius:4px;margin-bottom:6px;background-color:rgba(44, 120, 234, 0.139)}
+.list-id{padding:3px;border-radius:4px;color:rgb(40, 33, 22)}
+.list-date{padding:3px;border-radius:4px;color:#767676}
+
+/* WebKit Browsers */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f0f0; /* light neutral background */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #007BFF; /* blue to orange */
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #ff8c00; 
+}
+
+/* Firefox */
+.scroll-box {
+  scrollbar-width: thin;
+  scrollbar-color: #007BFF #f0f0f0; /* blue thumb, light track */
 }
