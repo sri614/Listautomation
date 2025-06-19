@@ -1,4 +1,5 @@
-<div class="flex-bn header__menu">
+<div class="flex-bn header__menu" style="position: relative;">
+  <p id="save-status" class="disable">Note: drag & drop to change order...</p>
   <h1>Create lists</h1>
 
   <div class="flex-bn">
@@ -34,10 +35,11 @@
 
 
 
+
 {{#if hasEmails}}
-  <div class="flex">
+  <div class="flex" id="segmentation-list">
     {{#each emails}}
-      <div class="card {{isType isMain this.domain}}">
+      <div class="card {{isType isMain this.domain}}" data-id="{{this._id}}">
         <div class="flex-bn flex-bn--alignTop mb-12">
           <div>
             <p class="brand" title="brand">{{this.brand}}</p>
@@ -184,6 +186,7 @@ document.getElementById("listSearch").addEventListener("input", (e) => {
   }
 });
 
+//search and view all
 document.getElementById("reload-btn").addEventListener("click", async () => {
   try {
     const response = await fetch("/api/created-lists");
@@ -242,7 +245,6 @@ document.getElementById("reload-btn").addEventListener("click", async () => {
   }
 });
 
-
     // Run automation with current filters
  document.getElementById('runBtn').addEventListener('click', async () => {
   const runBtn = document.getElementById('runBtn');
@@ -295,8 +297,6 @@ document.getElementById("reload-btn").addEventListener("click", async () => {
   }
 });
    
-
-
 
     // Modal logic
     const popupForm = document.getElementById("emailModal");
@@ -388,5 +388,9 @@ document.getElementById("reload-btn").addEventListener("click", async () => {
     
     // Initialize with BAU filter
     applyFilters();
+
+
+
+   //
   });
 </script>

@@ -37,9 +37,9 @@ const lists = await CreatedList.find({
     $lt: endOfDay
   }
 }).sort({ createdDate: -1 }).lean();
-    Segmentation.find()
+    await Segmentation.find().sort({ order: 1 }).lean()
       .then((emails) => {
-        // console.log(emails);
+         console.log(emails);
         res
           .status(200)
           .render("index", {
@@ -107,6 +107,34 @@ router.delete("/email/:id", async (req, res) => {
     res.status(500).json({ msg: "Unable to delete the email" });
   }
 });
+
+
+
+
+/// others 
+//segmentation reorder
+router.post('/api/segmentations/reorder', async (req, res) => {
+  const { orderedIds } = req.body;
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ success: false, message: "Invalid input" });
+  }
+
+  try {
+    const bulkOps = orderedIds.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { $set: { order: index } }
+      }
+    }));
+
+    await Segmentation.bulkWrite(bulkOps);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Reorder failed:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 
 
 

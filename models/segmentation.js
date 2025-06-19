@@ -10,6 +10,7 @@ const SegmentationSchema = new mongoose.Schema({
   domain: { type: String, required: true },
   date: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
+  order: { type: Number, default: 1 } // ← required for sorting
 });
 
 const Segmentation = mongoose.model('Segmentation', SegmentationSchema);

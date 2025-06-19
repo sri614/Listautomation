@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{title}}</title>
   <link rel="stylesheet" href="/css/style.css" />
+  {{!-- sortable --}}
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
 
@@ -93,6 +95,42 @@ document.querySelectorAll(".list-date-span").forEach(el => {
     document.querySelectorAll(".campaign").forEach(el => {
       el.textContent = `${el.textContent.slice(0,18)}`;
     });
+
+
+    //drag and drop
+   const list = document.getElementById('segmentation-list');
+    const status = document.getElementById('save-status');
+
+    new Sortable(list, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',     // Class applied to ghost element
+      chosenClass: 'sortable-chosen',   // Class applied to picked-up item
+      dragClass: 'drag-active',     
+      onEnd: async () => {
+        const ids = [...list.querySelectorAll('.card')].map(el => el.dataset.id);
+        try {
+          const res = await fetch('/api/segmentations/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds: ids })
+          });
+
+          const result = await res.json();
+          if (result.success) {
+            status.textContent = "Order saved!";
+            status.classList.toggle("save-status");
+            status.classList.toggle("disable");
+            setTimeout(() => status.textContent = "", 1500);
+          } else {
+            status.textContent = "Failed to save order.";
+          }
+        } catch (err) {
+          console.error("Error:", err);
+          status.textContent = "Server error.";
+        }
+      }
+    });
+
 
 
     

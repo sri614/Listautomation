@@ -140,6 +140,22 @@ footer {
 }
 
 /* === CARDS === */
+.sortable-chosen {
+  transform: scale(1.02);
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.2);
+  background: #f0f9ff;
+}
+
+.sortable-ghost {
+  background-color: #dbeafe;
+  opacity: 0.6;
+  border: 2px dashed #3b82f6;
+}
+#save-status{position:absolute;top:80px;left:10px;}
+.disable{color: #8c8c8c;font-weight: 400;}
+.save-status{
+  color: green;font-weight:700;
+}
 .card {
   position: relative;
   overflow: hidden;
@@ -155,6 +171,8 @@ footer {
   justify-content: space-evenly;
   width: calc(25% - 22.5px);
   min-width: 230px;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .brand {
