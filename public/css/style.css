@@ -6,16 +6,12 @@
   padding: 0;
   box-sizing: border-box;
 }
-
-/* === BASE STYLES === */
 body {
   font-family: "Lexend", sans-serif;
   background: #f0f2f5;
   padding-top: 60px;
   min-height: 100vh;
 }
-
-/* === HEADER === */
 header {
   background-color: #1654a0;
   color: white;
@@ -27,7 +23,6 @@ header {
   z-index: 1000;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-
 header .container {
   max-width: 1100px;
   margin: 0 auto;
@@ -54,8 +49,6 @@ header .container {
 .navbar a:hover,.navbar .active {
   text-decoration: underline;
 }
-
-/* === MAIN === */
 main {
   min-height:calc(100vh - 120px);
   margin: 40px 20px;
@@ -64,8 +57,6 @@ main {
   border-radius: 12px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
 }
-
-/* === FOOTER === */
 footer {
   background-color: #333333a3;
   color: white;
@@ -74,8 +65,6 @@ footer {
   font-size: 0.9em;
   width: 100%;
 }
-
-/* === BUTTONS === */
 .btn-primary {
   background-color: #227ad7;
   color: white;
@@ -88,11 +77,9 @@ footer {
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-
 .btn-primary:hover {
   background-color: #f36711;
 }
-
 #edit-btn, #delete-btn {
   padding: 3px;
   border: 1px solid transparent;
@@ -105,7 +92,6 @@ footer {
   justify-content: center;
   align-items: center;
 }
-
 #edit-btn:hover {
   border-color: #067be1;
 }
@@ -119,7 +105,7 @@ footer {
   text-align: right;
 }
 
-/* === FLEX HELPERS === */
+
 .flex,
 .flex-box,
 .flex-bn {
@@ -138,8 +124,6 @@ footer {
 .mb-12 {
   margin-bottom: 12px;
 }
-
-/* === CARDS === */
 .sortable-chosen {
   transform: scale(1.02);
   box-shadow: 0 10px 24px rgba(59, 130, 246, 0.2);
@@ -228,8 +212,6 @@ footer {
   color: #f0f2f5;
   display: block;
 }
-
-/* === MODAL === */
 .modal {
   display: none;
   position: fixed;
@@ -299,8 +281,6 @@ footer {
 .mb-20 {
   margin-bottom: 20px;
 }
-
-/* === FORM === */
 form label {
   margin-top: 15px;
   font-weight: 600;
@@ -338,7 +318,6 @@ form button[type="submit"]:hover {
   background-color: #0056b3;
 }
 
-/* === TYPOGRAPHY === */
 .dashboard h1, form h2 {
   color: #067be1;
 }
@@ -346,8 +325,6 @@ form button[type="submit"]:hover {
 .dashboard h3 {
   margin-bottom: 8px;
 }
-
-/* === MEDIA QUERIES === */
 @media (max-width:920px) {
   .card {
     width: calc(33.33% - 40px);
@@ -468,19 +445,18 @@ div .sticky{position: sticky;top:0;background-color: rgb(28, 104, 203);z-index: 
 .list-id{padding:3px;border-radius:4px;color:rgb(40, 33, 22)}
 .list-date{padding:3px;border-radius:4px;color:#767676}
 
-/* WebKit Browsers */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f0f0f0; /* light neutral background */
+  background: #f0f0f0; 
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #007BFF; /* blue to orange */
+  background-color: #007BFF;
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -490,8 +466,7 @@ div .sticky{position: sticky;top:0;background-color: rgb(28, 104, 203);z-index: 
   background-color: #ff8c00; 
 }
 
-/* Firefox */
 .scroll-box {
   scrollbar-width: thin;
-  scrollbar-color: #007BFF #f0f0f0; /* blue thumb, light track */
+  scrollbar-color: #007BFF #f0f0f0;
 }

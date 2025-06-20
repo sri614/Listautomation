@@ -84,10 +84,7 @@ router.put("/email/:id/edit", async (req, res) => {
   }
 });
 
-//  Delete functionality
-// 2types
-// soft delete => update the field "active" -> Y/N
-// hard delete => deletion of record/document
+//  Delete
 router.delete("/email/:id", async (req, res) => {
   try {
     const id = req.params.id;

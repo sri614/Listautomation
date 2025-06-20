@@ -14,7 +14,6 @@ app.use(express.static("public"));
 app.use(methodOverride('_method'));
 
 
-//set template engine
 app.engine("hbs",engine({extname:".hbs",layoutDir:"views/layouts/",defaultLayout:"main-layout", 
     helpers: {
       isActive: function (activePage, currentPage, options) {

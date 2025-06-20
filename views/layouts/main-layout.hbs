@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{pageTitle}}</title>
   <link rel="stylesheet" href="/css/style.css" />
-  {{!-- sortable --}}
+  {{!-- sortable cdn --}}
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
 
-  <!-- ===== HEADER ===== -->
+  {{!-- Header --}}
   <header>
     <div class="container">
       <div class="logo">BO Emailer</div>
@@ -23,17 +23,17 @@
     </div>
   </header>
 
-  <!-- ===== MAIN CONTENT ===== -->
+  <!-- Main Content -->
   <main class="main dashboard">
     {{{body}}}
   </main>
 
-  <!-- ===== FOOTER ===== -->
+{{!-- Footer --}}
   <footer>
     &copy; 2025 BO Emailer. All rights reserved.
   </footer>
 
-  <!-- ===== MODAL FUNCTIONALITY ===== -->
+
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const modal = document.getElementById("emailModal");

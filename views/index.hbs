@@ -170,13 +170,13 @@
 {{else}}
   <h3>No Lists created Today</h3>
 {{/if}}
-<!-- Scripts -->
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
   let searchOn = false;
   let query = "";
 
-// Watch input field for changes
+// watch input field for changes
 document.getElementById("listSearch").addEventListener("input", (e) => {
   query = e.target.value.trim().toLowerCase();
   searchOn = query.length > 0;
@@ -391,6 +391,6 @@ document.getElementById("reload-btn").addEventListener("click", async () => {
 
 
 
-   //
+
   });
 </script>

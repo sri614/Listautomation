@@ -137,14 +137,14 @@ const addContactsToList = async (listId, contacts) => {
   }
 };
 
-// ✅ Updated: Batch update recent_marketing_email_sent_date
+//Batch update recent_marketing_email_sent_date
 const updateRecentDate = async (contactIds, dateValue) => {
   const epochMidnight = new Date(dateValue);
   epochMidnight.setUTCHours(0, 0, 0, 0);
   const epochTime = epochMidnight.getTime();
   console.log(`🕓 Batch updating 'recent_marketing_email_sent_date' for ${contactIds.length} contacts to ${dateValue} (${epochTime})`);
 
-  const chunks = chunkArray(contactIds, 100); // HubSpot limit
+  const chunks = chunkArray(contactIds, 100); // hubSpot limit
 
   for (const chunk of chunks) {
     const payload = {
