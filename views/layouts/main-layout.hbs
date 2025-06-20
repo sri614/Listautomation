@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{title}}</title>
+  <title>{{pageTitle}}</title>
   <link rel="stylesheet" href="/css/style.css" />
   {{!-- sortable --}}
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -15,7 +15,7 @@
     <div class="container">
       <div class="logo">BO Emailer</div>
       <nav class="navbar">
-        <a class="{{isActive activePage 'docs'}}" href="/">Docs</a>
+        <a class="{{isActive activePage 'docs'}}" href="/docs">Docs</a>
         <a class="{{isActive activePage 'create list'}}"  href="/">Create lists</a>
         <a class="{{isActive activePage 'email cloning'}}" href="/api/cloner">Email Cloning</a>
         <a class="{{isActive activePage 'report'}}" href="/report">Report</a>

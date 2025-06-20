@@ -137,6 +137,19 @@ router.post('/api/segmentations/reorder', async (req, res) => {
 
 
 
+//docs page
+router.get('/docs', async (req, res) => {
+  try{
+    res.render("docs",{
+       pageTitle: "docs",
+      activePage:"docs",
+    })
+  } catch (err) {
+    console.error("Reorder failed:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 
 
 module.exports = router;

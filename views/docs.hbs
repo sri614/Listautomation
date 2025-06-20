@@ -1,0 +1,242 @@
+<style>
+  .nav-btn {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+    text-align: left;
+    transition: color 0.3s ease;
+  }
+
+  .nav-btn:hover,
+  .nav-btn.active {
+    color: #4f46e5;
+  }
+
+  .nav-btn::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    height: 2px;
+    width: 0%;
+    background: #4f46e5;
+    transition: width 0.3s ease;
+  }
+
+  .nav-btn:hover::after,
+  .nav-btn.active::after {
+    width: 100%;
+  }
+
+  #doc-content {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  #doc-content.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .fade-in {
+    animation: fadeInleft 0.6s ease-in-out;
+  }
+    .fade-in-r {
+    animation: fadeInright 0.6s ease-in-out;
+  }
+
+
+  @keyframes fadeInleft {
+    0% {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+    @keyframes fadeInright {
+    0% {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  h2 {
+    margin-top: 1rem;
+    color: #1e1e2f;
+  }
+
+  h3 {
+    margin-top: 1rem;
+    color: #333;
+  }
+
+  ul {
+    padding-left: 1.2rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    line-height: 1.6;
+  }
+</style>
+
+<div class="container fade-in" style="display: flex; gap: 2rem; padding: 2rem; max-width: 1200px; margin: auto;">
+  <!-- Main Section -->
+  <div style="flex: 3;">
+    <h1 style="margin-bottom: 1.5rem;">BO Emailer Automation Documentation</h1>
+    <div id="doc-content" class="show">
+      <h2>Introduction</h2>
+      <p>
+        BO Emailer Automation is an internal tool designed to make list management and email campaign execution faster and smarter. 
+        It was built to replace repetitive marketing tasks with automation, giving you more time to focus on strategy.
+      </p>
+      <p>
+        Whether you’re running campaigns weekly or daily, this system gives you control over list creation, cloning of existing emails, 
+        scheduling, and live tracking — all from a single dashboard.
+      </p>
+      <h3>Who is this for?</h3>
+      <ul>
+        <li>Marketing managers planning recurring campaigns</li>
+        <li>CRM or email marketing operators</li>
+        <li>Automation engineers working with contact segmentation</li>
+      </ul>
+      <p>
+        With features like real-time list display, drag-and-drop arrangement, and instant campaign scheduling, 
+        BO Emailer brings speed and accuracy to your marketing flow.
+      </p>
+    </div>
+  </div>
+
+  <!-- Navigation Panel -->
+  <div style="flex: 1; border-left: 1px solid #ccc; padding-left: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Navigation</h3>
+    <ul style="list-style: none; padding: 0;">
+      <li><button class="nav-btn active" data-section="intro">🧭 Intro</button></li>
+      <li><button class="nav-btn" data-section="run">⚙️ How to Run</button></li>
+      <li><button class="nav-btn" data-section="features">✨ Features</button></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const contentMap = {
+    intro: `
+      <h2>Introduction</h2>
+      <p>
+        BO Emailer is your internal tool for effortlessly managing and automating email campaigns and segmented lists. 
+        Its goal is to streamline your team’s workflow by enabling fast, repeatable actions like cloning emails, 
+        building contact lists, and monitoring outcomes.
+      </p>
+      <p>
+        It's designed to be flexible enough for large-scale campaigns, yet simple enough for daily usage. 
+        The intuitive UI allows users to perform complex actions with minimal training.
+      </p>
+      <h3>Why BO Emailer?</h3>
+      <ul>
+        <li>Handles both campaign and contact automation</li>
+        <li>Built with custom scheduling for flexible dispatch</li>
+        <li>Supports bulk list ID handling</li>
+        <li>Drag-and-drop sequencing of actions</li>
+        <li>Full edit/delete control before execution</li>
+      </ul>
+    `,
+
+    run: `
+      <h2>How to Run the Automation</h2>
+      <h3>📤 Email Cloning</h3>
+      <p>
+        Email cloning is ideal when you want to reuse an existing campaign for different segments or update timing without recreating emails.
+      </p>
+      <ol>
+        <li>Navigate to the <strong>Email Cloning</strong> page.</li>
+        <li>Paste one or more List IDs (comma-separated).</li>
+        <li>Select a preferred date and time from the Smart time picker.</li>
+        <li>Click <strong>Run</strong>. The system queues your request and shows real-time status updates.</li>
+      </ol>
+      <p><strong>Example:</strong> Want to send “Summer Promo” to 5 custom segments? Paste their Email IDs, choose timielines of 11am to 12pm or 4pm to 6pm or Both, and you’re done.</p>
+
+      <h3>📋 List Creation</h3>
+      <p>
+        List creation helps you build custom audiences based on form input and filter logic.
+      </p>
+      <ol>
+        <li>Click on <strong>Create List</strong>.</li>
+        <li>Use the <strong>Add Emails</strong> form to input campaign-related details.</li>
+        <li>Select filters like date(T + 1 is tommorrow) and type of email such as BAU , Re-engagement, Re-activation.</li>
+        <li>Click <strong>Run Automation</strong> to generate the list.</li>
+      </ol>
+      <p>
+        Created lists will appear under “Created Lists” with timestamp, listId, and filters used. Andso view the list instantly.
+      </p>
+    `,
+
+    features: `
+      <h2>Key Features</h2>
+
+      <h3>🔃 Drag-and-Drop Card Ordering</h3>
+      <p>
+        In the list builder, cards represent segments or email modules. You can drag them to reorder. 
+        This sequence determines how your emails will be cloned or how data flows in automation.
+        once you change the card, you will see the order saved at left side top corner. if not see that No changes can added.
+      </p>
+
+      <h3>✏️ Edit and Delete Functions</h3>
+      <p>
+        Before execution, each email block comes with inline editing and delete icons. 
+        Quickly correct typos, change date, or remove unnecessary steps without restarting.
+      </p>
+
+      <h3>📑 Multi-Email Cloning</h3>
+      <p>
+        Just paste multiple Email IDs separated by commas. The system will validate, deduplicate, 
+        and queue them for processing — no need to repeat cloning for each list.
+      </p>
+
+      <h3>📅 Timed Scheduling</h3>
+      <p>
+        Set it and forget it. Schedule your emails for future delivery so they go out even if you’re not online.
+        Perfect for holiday campaigns or global outreach in different time zones.
+      </p>
+
+      <h3>🧠 Activity Logging</h3>
+      <p>
+        Every action — list created, email cloned, time scheduled — is logged in the backend. 
+        This helps with debugging, auditing, and tracking performance over time.
+      </p>
+    `
+  };
+
+  const contentEl = document.getElementById('doc-content');
+  const navButtons = document.querySelectorAll('.nav-btn');
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      contentEl.classList.remove('show');
+
+      setTimeout(() => {
+        const section = btn.getAttribute('data-section');
+        contentEl.innerHTML = contentMap[section];
+        contentEl.classList.add('show');
+      }, 300);
+    });
+  });
+</script>
