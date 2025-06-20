@@ -71,7 +71,7 @@ router.put("/email/:id/edit", async (req, res) => {
       new: true,
     })
       .then((updatedEmail) => {
-        console.log(updatedEmail);
+        console.log("updated:",updatedEmail);
         res.redirect("/");
       })
       .catch((error) => {
@@ -91,7 +91,7 @@ router.delete("/email/:id", async (req, res) => {
     // validation ...
     await Segmentation.findByIdAndDelete(id)
       .then((deletedEmail) => {
-        console.log("dlt", deletedEmail);
+        console.log("deleted", deletedEmail);
         res.redirect("/"); // redirect after deletion
         //  res.status(200).json({email:deletedEmail, msg:"Email deleted succesfully"});
       })
