@@ -39,7 +39,7 @@ const lists = await CreatedList.find({
 }).sort({ createdDate: -1 }).lean();
     await Segmentation.find().sort({ order: 1 }).lean()
       .then((emails) => {
-         console.log(emails);
+        //  console.log(emails);
         res
           .status(200)
           .render("index", {

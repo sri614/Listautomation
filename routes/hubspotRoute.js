@@ -195,7 +195,7 @@ const processSingleCampaign = async (config, daysFilter, modeFilter) => {
   ]);
 
   if (selectedContacts.length) {
-    console.log(newList)
+    // console.log(newList)
     await addContactsToList(newList.listId, selectedContacts);
     await updateRecentDate(selectedContacts, date);
   }
