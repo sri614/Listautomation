@@ -11,6 +11,7 @@
       <option value="today">Today</option>
       <option value="t+1">T+1 Days</option>
       <option value="t+2">T+2 Days</option>
+      <option value="t+3">T+3 Days</option>
     </select>
   </div>
   
@@ -365,6 +366,10 @@ document.getElementById("reload-btn").addEventListener("click", async () => {
           } else if (selectedDay === 't+2') {
             const dayAfter = new Date(today);
             dayAfter.setDate(dayAfter.getDate() + 2);
+            dayMatch = cardDate.getTime() === dayAfter.getTime();
+          }else if (selectedDay === 't+3') {
+            const dayAfter = new Date(today);
+            dayAfter.setDate(dayAfter.getDate() + 3);
             dayMatch = cardDate.getTime() === dayAfter.getTime();
           }
         }
