@@ -11,28 +11,41 @@
 <body>
 
   {{!-- Header --}}
+  {{#if user}}
   <header>
-    <div class="container">
-      <div class="logo">BO Emailer</div>
-      <nav class="navbar">
+    <header>
+  <div class="container">
+    <div class="logo">BO Emailer</div>
+    <nav class="navbar">
+      <div class="nav-links">
         <a class="{{isActive activePage 'docs'}}" href="/docs">Docs</a>
-        <a class="{{isActive activePage 'create list'}}"  href="/">Create lists</a>
+        <a class="{{isActive activePage 'create list'}}" href="/">Create lists</a>
         <a class="{{isActive activePage 'email cloning'}}" href="/api/cloner">Email Cloning</a>
         <a class="{{isActive activePage 'list cleaning'}}" href="/api/list-cleaner">List Cleaning</a>
         <a class="{{isActive activePage 'report'}}" href="/report">Report</a>
-      </nav>
-    </div>
+        <a class="{{isActive activePage 'logout'}}" href="/logout">Logout</a>
+      </div>
+      
+    </nav>
+  </div>
+</header>
   </header>
+{{/if}}
 
-  <!-- Main Content -->
-  <main class="main dashboard">
+<main class="main dashboard">
+  {{#if isLoginPage}}
+    <div class="login-page">
+      {{{body}}}
+    </div>
+  {{else}}
     {{{body}}}
-  </main>
+  {{/if}}
+</main>
 
 {{!-- Footer --}}
-  <footer>
+  {{!-- <footer>
     &copy; 2025 BO Emailer. All rights reserved.
-  </footer>
+  </footer> --}}
 
 
   <script>
