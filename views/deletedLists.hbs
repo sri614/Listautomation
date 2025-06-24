@@ -79,7 +79,7 @@
   }
 
   .status-deleted {
-    color: green;
+    color: red;
     font-weight: bold;
   }
 
@@ -109,7 +109,7 @@
 
 <input type="text" id="searchInput" placeholder="Search by name or listId..." />
 
-<form method="POST" action="/api/delete-lists">
+<form method="POST" action="/api/delete-lists" onsubmit="return confirmDeletion()">
   <label class="top-label">
     <input type="checkbox" id="selectAll"> Select All
   </label>
@@ -148,4 +148,15 @@
       item.style.display = regex.test(name) || regex.test(id) ? '' : 'none';
     });
   });
+
+  function confirmDeletion() {
+  const selected = document.querySelectorAll('.list-checkbox:checked');
+  if (selected.length === 0) {
+    alert("Please select at least one list to delete.");
+    return false;
+  }
+
+  return confirm("Are you sure you want to delete the selected HubSpot list(s)? This cannot be undone.");
+}
+
 </script>

@@ -340,7 +340,7 @@ router.post('/delete-lists', async (req, res) => {
     }
   }
 
-  res.redirect('/api/list-cleaner');
+  res.redirect('/api/list-cleaner?show=all');
 });
 
 module.exports = router;
