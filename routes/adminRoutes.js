@@ -142,7 +142,7 @@ router.get('/docs', async (req, res) => {
       activePage:"docs",
     })
   } catch (err) {
-    console.error("Reorder failed:", err);
+    console.error("failed:", err);
     res.status(500).json({ success: false });
   }
 });

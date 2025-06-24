@@ -1,0 +1,151 @@
+<style>
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 12px;
+  }
+ form input{width:fit-content;}
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1em;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+
+
+  }
+
+  form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .top-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .top-label input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+
+  li.list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #eee;
+    padding: 10px;
+  }
+
+  .list-info {
+    display: flex;
+    align-items: center;
+  }
+
+  .list-checkbox {
+    margin-right: 10px;
+    transform: scale(1.2);
+  }
+
+  .list-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list-name {
+    font-weight: bold;
+    color: #333;
+  }
+
+  .list-id {
+    color: #555;
+    font-size: 0.9em;
+  }
+
+  .status-deleted {
+    color: green;
+    font-weight: bold;
+  }
+
+  .status-created {
+    color: gray;
+    font-weight: bold;
+  }
+
+  button {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-top: 15px;
+    width: 100%;
+  }
+
+  button:hover {
+    background-color: #c9302c;
+  }
+</style>
+
+<h1>List Cleaner</h1>
+
+<input type="text" id="searchInput" placeholder="Search by name or listId..." />
+
+<form method="POST" action="/api/delete-lists">
+  <label class="top-label">
+    <input type="checkbox" id="selectAll"> Select All
+  </label>
+
+  <ul id="listContainer">
+    {{#each lists}}
+      <li class="list-item">
+        <div class="list-info">
+          <input type="checkbox" class="list-checkbox" name="selectedIds" value="{{this._id}}">
+          <div class="list-text">
+            <span class="list-name">{{this.name}}</span>
+            <span class="list-id">List ID: {{this.listId}}</span>
+          </div>
+        </div>
+        <span class="{{#if this.deleted}}status-deleted{{else}}status-created{{/if}}">
+          {{#if this.deleted}}Deleted{{else}}Created{{/if}}
+        </span>
+      </li>
+    {{/each}}
+  </ul>
+
+  <button type="submit">Delete Selected Lists</button>
+</form>
+
+<script>
+  document.getElementById('selectAll').addEventListener('change', function () {
+    document.querySelectorAll('.list-checkbox').forEach(cb => cb.checked = this.checked);
+  });
+
+  document.getElementById('searchInput').addEventListener('input', function () {
+    const input = this.value.trim();
+    const regex = new RegExp(input, 'i');
+    document.querySelectorAll('.list-item').forEach(item => {
+      const name = item.querySelector('.list-name')?.textContent || '';
+      const id = item.querySelector('.list-id')?.textContent || '';
+      item.style.display = regex.test(name) || regex.test(id) ? '' : 'none';
+    });
+  });
+</script>

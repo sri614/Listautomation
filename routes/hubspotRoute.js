@@ -204,6 +204,7 @@ const processSingleCampaign = async (config, daysFilter, modeFilter) => {
     name: listName,
     listId: newList.listId,
     createdDate: new Date(),
+    deleted:newList.deleted,
     filterCriteria: { days: daysFilter, mode: modeFilter },
     campaignDetails: { brand, campaign, date },
     contactCount: selectedContacts.length,
@@ -300,6 +301,46 @@ const lists = await CreatedList.find({
     console.error('❌ Failed to fetch created lists:', error.message);
     res.status(500).json({ error: 'Failed to fetch created lists' });
   }
+});
+
+// Render page with filter
+router.get('/list-cleaner', async (req, res) => {
+  const showAll = req.query.show === 'all';
+  const filter = showAll ? {} : { deleted: { $ne: true } };
+  const lists = await CreatedList.find(filter).lean();
+  res.render('deletedLists', { lists, showAll ,pageTitle: "list cleaning",
+      activePage:"list cleaning",});
+});
+
+// Delete route
+router.post('/delete-lists', async (req, res) => {
+  const selectedIds = Array.isArray(req.body.selectedIds)
+    ? req.body.selectedIds
+    : [req.body.selectedIds];
+
+  for (const _id of selectedIds) {
+    try {
+      const list = await CreatedList.findById(_id);
+      if (!list || list.deleted) continue;
+
+      // Delete from HubSpot
+      await axios.delete(`https://api.hubapi.com/contacts/v1/lists/${list.listId}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
+        },
+      });
+
+      // Mark as deleted
+      list.deleted = true;
+      await list.save();
+
+    } catch (err) {
+      console.error(`Error deleting listId ${_id}:`, err.message);
+      await CreatedList.findByIdAndUpdate(_id, { deleted: false });
+    }
+  }
+
+  res.redirect('/api/list-cleaner');
 });
 
 module.exports = router;
