@@ -13,7 +13,7 @@ router.get('/login', (req, res) => {
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
 
-  if (email.endsWith('@blueoshan.com') && password === '123') {
+  if (email.endsWith('@blueoshan.com') && password === '54321') {
     req.session.user = email;
     return res.redirect('/');
   }
