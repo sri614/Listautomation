@@ -8,9 +8,10 @@ const CreatedList = require('../models/list');
 // Config
 const HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 const HUBSPOT_PORTAL_ID = process.env.HUBSPOT_PORTAL_ID;
-const CONCURRENCY_LIMIT = parseInt(process.env.HUBSPOT_CONCURRENCY_LIMIT) || 3;
+const CONCURRENCY_LIMIT = 1;
 const RETRIEVAL_BATCH_SIZE = parseInt(process.env.HUBSPOT_RETRIEVAL_BATCH_SIZE) || 1000;
 const MAX_RETRIES = parseInt(process.env.HUBSPOT_MAX_RETRIES) || 3;
+const INTER_LIST_DELAY_MS = parseInt(process.env.HUBSPOT_INTER_LIST_DELAY_MINUTES || 3) * 60 * 1000;
 
 const hubspotHeaders = {
   Authorization: `Bearer ${HUBSPOT_ACCESS_TOKEN}`,
@@ -27,13 +28,13 @@ const getFormattedDate = (dateInput) => {
 const getFilteredDate = (daysFilter) => {
   const now = new Date();
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  if (daysFilter === 'today') {
-    return today.toISOString().split('T')[0];
-  } else if (daysFilter === 't+1') {
+  if (daysFilter === 'today') return today.toISOString().split('T')[0];
+  if (daysFilter === 't+1') {
     const tomorrow = new Date(today);
     tomorrow.setUTCDate(today.getUTCDate() + 1);
     return tomorrow.toISOString().split('T')[0];
-  } else if (daysFilter === 't+2') {
+  }
+  if (daysFilter === 't+2') {
     const dayAfter = new Date(today);
     dayAfter.setUTCDate(today.getUTCDate() + 2);
     return dayAfter.toISOString().split('T')[0];
@@ -43,9 +44,7 @@ const getFilteredDate = (daysFilter) => {
 
 const chunkArray = (arr, size) => {
   const chunks = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
   return chunks;
 };
 
@@ -72,15 +71,11 @@ const getContactsFromList = async (listId, maxCount = Infinity) => {
   while (hasMore && retryCount < MAX_RETRIES && allContacts.length < maxCount) {
     try {
       const countToFetch = Math.min(RETRIEVAL_BATCH_SIZE, maxCount - allContacts.length);
-      console.log(`🔍 Fetching contacts from list: ${listId} | So far: ${allContacts.length}`);
       const res = await axios.get(
         `https://api.hubapi.com/contacts/v1/lists/${listId}/contacts/all`,
         {
           headers: hubspotHeaders,
-          params: {
-            count: countToFetch,
-            vidOffset: offset
-          }
+          params: { count: countToFetch, vidOffset: offset }
         }
       );
 
@@ -95,33 +90,33 @@ const getContactsFromList = async (listId, maxCount = Infinity) => {
         break;
       }
     } catch (error) {
-      console.error(`⚠️ Error on attempt ${retryCount} for list ${listId}:`, error.message);
       retryCount++;
-      if (retryCount < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, 1000 * retryCount));
-      } else {
-        hasMore = false;
-      }
+      console.error(`⚠️ Error fetching contacts from list ${listId}, retry ${retryCount}:`, error.message);
+      if (retryCount < MAX_RETRIES) await new Promise(r => setTimeout(r, 1000 * retryCount));
+      else hasMore = false;
     }
   }
 
-  return allContacts;
+  return [...new Set(allContacts)];
 };
 
 const createHubSpotList = async (name) => {
-  console.log(`📝 Creating new HubSpot list: ${name}`);
-  const res = await axios.post(
-    'https://api.hubapi.com/contacts/v1/lists',
-    { name, dynamic: false },
-    { headers: hubspotHeaders }
-  );
-  return res.data;
+  console.log(`📝 Creating list: ${name}`);
+  try {
+    const res = await axios.post(
+      'https://api.hubapi.com/contacts/v1/lists',
+      { name, dynamic: false },
+      { headers: hubspotHeaders }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(`❌ Failed to create list: ${name}`, error.message);
+    throw error;
+  }
 };
 
 const addContactsToList = async (listId, contacts) => {
-  console.log(`📤 Adding ${contacts.length} contacts to list ${listId}`);
   const chunks = progressiveChunks(contacts);
-
   for (const chunk of chunks) {
     try {
       await axios.post(
@@ -129,22 +124,22 @@ const addContactsToList = async (listId, contacts) => {
         { vids: chunk },
         { headers: hubspotHeaders }
       );
-      console.log(`   → Chunk of ${chunk.length} added`);
+      console.log(`✅ Added chunk of ${chunk.length} contacts to list ${listId}`);
+      await new Promise(r => setTimeout(r, 500));
     } catch (error) {
-      console.error(`Failed to add contacts to list ${listId}:`, error.message);
+      console.error(`❌ Failed to add contacts to list ${listId}`, error.message);
+      throw error;
     }
-    await new Promise(r => setTimeout(r, 200));
   }
 };
 
-//Batch update recent_marketing_email_sent_date
 const updateRecentDate = async (contactIds, dateValue) => {
   const epochMidnight = new Date(dateValue);
   epochMidnight.setUTCHours(0, 0, 0, 0);
   const epochTime = epochMidnight.getTime();
-  console.log(`🕓 Batch updating 'recent_marketing_email_sent_date' for ${contactIds.length} contacts to ${dateValue} (${epochTime})`);
 
-  const chunks = chunkArray(contactIds, 100); // hubSpot limit
+  const chunks = chunkArray(contactIds, 100);
+  console.log(`🕓 Updating recent_marketing_email_sent_date for ${contactIds.length} contacts`);
 
   for (const chunk of chunks) {
     const payload = {
@@ -162,32 +157,37 @@ const updateRecentDate = async (contactIds, dateValue) => {
         payload,
         { headers: hubspotHeaders }
       );
-      // console.log(`✅ Successfully updated ${chunk.length} contacts`);
+      console.log(`✅ Updated batch of ${chunk.length} contacts`);
+      await new Promise(r => setTimeout(r, 300));
     } catch (err) {
-      console.error(`❌ Failed batch update for chunk:`, err.response?.data || err.message);
+      console.error(`❌ Failed batch update:`, err.message);
+      throw err;
     }
-
-    await new Promise(r => setTimeout(r, 300));
   }
 };
 
-const processSingleCampaign = async (config, daysFilter, modeFilter) => {
+// ✅ Main Campaign Processing Function with Logs
+const processSingleCampaign = async (config, daysFilter, modeFilter, usedContactsSet) => {
   const { brand, campaign, primaryListId, secondaryListId, count, domain, date, sendContactListId } = config;
 
-  console.log(`🚀 Processing campaign: ${campaign} | Brand: ${brand} | Domain: ${domain}`);
+  console.log(`\n🚀 Starting campaign: ${campaign} | Brand: ${brand} | Domain: ${domain}`);
+  let contacts = await getContactsFromList(primaryListId, count * 2);
+  contacts = contacts.filter(vid => !usedContactsSet.has(vid));
+  console.log(`📥 Got ${contacts.length} valid contacts from primary list`);
 
-  let contacts = await getContactsFromList(primaryListId, count);
   if (contacts.length < count && secondaryListId) {
-    const needed = count - contacts.length;
-    const secondaryContacts = await getContactsFromList(secondaryListId, needed);
+    console.log(`📥 Fetching fallback from secondary list: ${secondaryListId}`);
+    let secondaryContacts = await getContactsFromList(secondaryListId, (count - contacts.length) * 2);
+    secondaryContacts = secondaryContacts.filter(vid => !usedContactsSet.has(vid));
     contacts = contacts.concat(secondaryContacts);
+    console.log(`➕ Added ${secondaryContacts.length} more from secondary list`);
   }
 
   const selectedContacts = contacts.slice(0, count);
-  console.log(`🔢 Selected ${selectedContacts.length} contacts out of requested ${count}`);
+  selectedContacts.forEach(vid => usedContactsSet.add(vid));
+  console.log(`✂️ Final selected contacts: ${selectedContacts.length} of ${count} requested`);
 
-  const formattedDate = getFormattedDate(date);
-  const listName = `${brand} - ${campaign} - ${domain} - ${formattedDate}`;
+  const listName = `${brand} - ${campaign} - ${domain} - ${getFormattedDate(date)}`;
 
   const [newList] = await Promise.all([
     createHubSpotList(listName),
@@ -195,53 +195,78 @@ const processSingleCampaign = async (config, daysFilter, modeFilter) => {
   ]);
 
   if (selectedContacts.length) {
-    // console.log(newList)
     await addContactsToList(newList.listId, selectedContacts);
     await updateRecentDate(selectedContacts, date);
   }
 
-  await CreatedList.create({
+  const createdList = await CreatedList.create({
     name: listName,
     listId: newList.listId,
     createdDate: new Date(),
-    deleted:newList.deleted,
+    deleted: newList.deleted,
     filterCriteria: { days: daysFilter, mode: modeFilter },
     campaignDetails: { brand, campaign, date },
     contactCount: selectedContacts.length,
     requestedCount: count
   });
 
-  console.log(`✅ Saved new list record: ${listName} (${selectedContacts.length} contacts)`);
+  console.log(`✅ List created: ${listName} | ID: ${newList.listId}`);
 
   return {
     success: true,
     listName,
     listId: newList.listId,
     contactCount: selectedContacts.length,
-    requestedCount: count
+    requestedCount: count,
+    createdList
   };
 };
 
-const processCampaignsInParallel = async (listConfigs, daysFilter, modeFilter) => {
+// ✅ Run Campaigns with 3-minute Delay
+const processCampaignsWithDelay = async (listConfigs, daysFilter, modeFilter) => {
   const results = [];
-  const batches = chunkArray(listConfigs, CONCURRENCY_LIMIT);
+  const usedContacts = new Set();
 
-  console.log(`📦 Processing ${listConfigs.length} campaigns in batches of ${CONCURRENCY_LIMIT}`);
+  console.log(`\n🚦 Starting campaign execution with ${INTER_LIST_DELAY_MS / 60000} min delay`);
 
-  for (const batch of batches) {
-    console.log(`   → Processing batch of ${batch.length} campaigns...`);
-    const batchPromises = batch.map(config => processSingleCampaign(config, daysFilter, modeFilter));
-    const batchResults = await Promise.allSettled(batchPromises);
-    results.push(...batchResults);
-    await new Promise(r => setTimeout(r, 1000));
+  for (const [index, config] of listConfigs.entries()) {
+    const startTime = Date.now();
+    const currentIndex = index + 1;
+    const total = listConfigs.length;
+
+    console.log(`\n📋 [${currentIndex}/${total}] Processing: ${config.campaign}`);
+    try {
+      const result = await processSingleCampaign(config, daysFilter, modeFilter, usedContacts);
+      results.push({ status: 'fulfilled', value: result });
+
+      if (index < total - 1) {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, INTER_LIST_DELAY_MS - elapsed);
+        console.log(`⏳ Waiting ${Math.round(delay / 1000)} seconds before next campaign`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    } catch (error) {
+      console.error(`❌ Campaign failed: ${config.campaign} | ${error.message}`);
+      results.push({ status: 'rejected', reason: error });
+
+      const elapsed = Date.now() - startTime;
+      const delay = Math.max(0, INTER_LIST_DELAY_MS - elapsed);
+      if (index < listConfigs.length - 1) {
+        console.log(`⏳ Waiting ${Math.round(delay / 1000)} seconds after failure`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
   }
 
+  console.log(`\n🎯 Campaign run complete | ✅ Success: ${results.filter(r => r.status === 'fulfilled').length}, ❌ Failed: ${results.filter(r => r.status === 'rejected').length}`);
   return results;
 };
 
+// ✅ Entry Point to Create Lists
 router.post('/create-lists', async (req, res) => {
   const { daysFilter, modeFilter } = req.body;
-  console.log(`📨 Received request to create lists | Filter: ${daysFilter}, Mode: ${modeFilter}`);
+  console.log(`📨 Received request to create lists | Filters → Days: ${daysFilter}, Mode: ${modeFilter}`);
+
   let query = {};
 
   if (daysFilter && daysFilter !== 'all') {
@@ -260,84 +285,75 @@ router.post('/create-lists', async (req, res) => {
   }
 
   const listConfigs = await Segmentation.find(query).lean();
-  if (!listConfigs.length) {
-    return res.status(404).json({ error: 'No campaigns match the selected filters' });
-  }
+  if (!listConfigs.length) return res.status(404).json({ error: 'No campaigns match the selected filters' });
 
   res.json({
-    message: '🚀 List creation started in background',
+    message: `🚀 Background processing started with ${INTER_LIST_DELAY_MS / 60000}-minute delay`,
     count: listConfigs.length,
     firstCampaign: listConfigs[0]?.campaign || 'None',
-    totalContactsRequested: listConfigs.reduce((sum, c) => sum + c.count, 0)
+    totalContactsRequested: listConfigs.reduce((sum, c) => sum + c.count, 0),
+    estimatedCompletionTime: `${Math.ceil(listConfigs.length * INTER_LIST_DELAY_MS / 3600000)} hrs ${Math.ceil((listConfigs.length * INTER_LIST_DELAY_MS % 3600000) / 60000)} mins`
   });
 
-  console.log(`⏳ Starting background list creation for ${listConfigs.length} campaigns...`);
-
-  const results = await processCampaignsInParallel(listConfigs, daysFilter, modeFilter);
-  const successes = results.filter(r => r.status === 'fulfilled' && r.value.success);
-  const failures = results.filter(r => r.status === 'rejected' || !r.value.success);
-
-  console.log(`✅ ${successes.length} campaigns processed successfully`);
-  console.log(`❌ ${failures.length} campaigns failed`);
+  try {
+    await processCampaignsWithDelay(listConfigs, daysFilter, modeFilter);
+  } catch (error) {
+    console.error('❌ Overall process failed:', error.message);
+  }
 });
 
 router.get('/created-lists', async (req, res) => {
   try {
-   
-const now = new Date();
-const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-const endOfDay = new Date(startOfDay);
-endOfDay.setUTCDate(startOfDay.getUTCDate() + 1);
+    const now = new Date();
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setUTCDate(startOfDay.getUTCDate() + 1);
 
-const lists = await CreatedList.find({
-  //fetch current date list only
-  // createdDate: {
-  //   $gte: startOfDay,
-  //   $lt: endOfDay
-  // }
-}).sort({ createdDate: -1 }).lean();
+    const lists = await CreatedList.find({
+      createdDate: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      }
+    }).sort({ createdDate: -1 }).lean();
+
     res.json(lists);
   } catch (error) {
-    console.error('❌ Failed to fetch created lists:', error.message);
     res.status(500).json({ error: 'Failed to fetch created lists' });
   }
 });
 
-// Render page with filter
 router.get('/list-cleaner', async (req, res) => {
   const showAll = req.query.show === 'all';
   const filter = showAll ? {} : { deleted: { $ne: true } };
   const lists = await CreatedList.find(filter).lean();
-  res.render('deletedLists', { lists, showAll ,pageTitle: "list cleaning",
-      activePage:"list cleaning",});
+  res.render('deletedLists', {
+    lists,
+    showAll,
+    pageTitle: "List Cleaning",
+    activePage: "list cleaning"
+  });
 });
 
-// Delete route
 router.post('/delete-lists', async (req, res) => {
-  const selectedIds = Array.isArray(req.body.selectedIds)
-    ? req.body.selectedIds
-    : [req.body.selectedIds];
+  const selectedIds = Array.isArray(req.body.selectedIds) ? req.body.selectedIds : [req.body.selectedIds];
 
   for (const _id of selectedIds) {
     try {
       const list = await CreatedList.findById(_id);
       if (!list || list.deleted) continue;
 
-      // Delete from HubSpot
       await axios.delete(`https://api.hubapi.com/contacts/v1/lists/${list.listId}`, {
-        headers: {
-          Authorization: `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
-        },
+        headers: hubspotHeaders
       });
 
-      // Mark as deleted
       list.deleted = true;
       await list.save();
-
+      console.log(`🗑️ Deleted list: ${list.name} | ID: ${list.listId}`);
     } catch (err) {
-      console.error(`Error deleting listId ${_id}:`, err.message);
+      console.error(`❌ Error deleting list ${_id}:`, err.message);
       await CreatedList.findByIdAndUpdate(_id, { deleted: false });
     }
+    await new Promise(r => setTimeout(r, 500));
   }
 
   res.redirect('/api/list-cleaner?show=all');

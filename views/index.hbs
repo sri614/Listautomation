@@ -16,7 +16,7 @@
   </div>
   
   <div class="filter-dropdown">
-    <label for="modeFilter">Email Mode:</label>
+    <label for="modeFilter">List Mode:</label>
     <select id="modeFilter" class="filter-select">
       <option value="BAU">BAU (Default)</option>
       <option value="re-engagement">Re-engagement</option>
@@ -25,14 +25,14 @@
   </div>
 </div>
 
-    <button id="openFormBtn" class="btn-primary" type="button">Add Email</button>
+    <button id="openFormBtn" class="btn-primary" type="button">Add Lists</button>
     <button id="runBtn" class="btn-primary" type="button">Run Automation</button>
   </div>
 
 
 </div>
 
-<h4 class="emailCount mb-12">{{emails.length}} Emails</h4>
+<h4 class="emailCount mb-12">{{emails.length}} Lists</h4>
 
 
 
@@ -388,7 +388,7 @@ document.getElementById("reload-btn").addEventListener("click", async () => {
       
       // Update email count display
       const visibleCount = document.querySelectorAll('.card[style="display: block;"]').length;
-      document.querySelector('h4').textContent = `${visibleCount} Emails`;
+      document.querySelector('h4').textContent = `${visibleCount} Lists`;
     }
     
     // Initialize with BAU filter
