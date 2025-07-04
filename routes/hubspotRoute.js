@@ -136,15 +136,15 @@ const addContactsToList = async (listId, contacts) => {
 const updateRecentDate = async (contactIds, dateValue) => {
   const epochMidnight = new Date(dateValue);
   epochMidnight.setUTCHours(0, 0, 0, 0);
-  const epochTime = epochMidnight.getTime();
+  const epochTime = epochMidnight.getTime().toString();
 
   const chunks = chunkArray(contactIds, 100);
   console.log(`🕓 Updating recent_marketing_email_sent_date for ${contactIds.length} contacts`);
 
   for (const chunk of chunks) {
     const payload = {
-      inputs: chunk.map(vid => ({
-        id: vid.toString(),
+      inputs: chunk.map(contactId => ({
+        id: contactId.toString(),  // ✅ FIXED here
         properties: {
           recent_marketing_email_sent_date: epochTime
         }
@@ -158,34 +158,47 @@ const updateRecentDate = async (contactIds, dateValue) => {
         { headers: hubspotHeaders }
       );
       console.log(`✅ Updated batch of ${chunk.length} contacts`);
-      await new Promise(r => setTimeout(r, 300));
     } catch (err) {
-      console.error(`❌ Failed batch update:`, err.message);
-      throw err;
+      console.error(`❌ Failed batch update:`, err.response?.data || err.message);
+      console.error(`🧪 Failing IDs:`, chunk);
     }
+
+    await new Promise(r => setTimeout(r, 300));
   }
 };
 
-// ✅ Main Campaign Processing Function with Logs
+
 const processSingleCampaign = async (config, daysFilter, modeFilter, usedContactsSet) => {
   const { brand, campaign, primaryListId, secondaryListId, count, domain, date, sendContactListId } = config;
 
   console.log(`\n🚀 Starting campaign: ${campaign} | Brand: ${brand} | Domain: ${domain}`);
-  let contacts = await getContactsFromList(primaryListId, count * 2);
-  contacts = contacts.filter(vid => !usedContactsSet.has(vid));
-  console.log(`📥 Got ${contacts.length} valid contacts from primary list`);
+  
+  // Get contacts with enhanced tracking
+  let primaryContacts = await getContactsFromList(primaryListId, count * 2);
+  const primaryBeforeFilter = primaryContacts.length;
+  primaryContacts = primaryContacts.filter(vid => !usedContactsSet.has(vid));
+  const primaryAfterFilter = primaryContacts.length;
+  
+  console.log(`📥 Primary List: ${primaryBeforeFilter} available | ${primaryBeforeFilter - primaryAfterFilter} filtered | ${primaryAfterFilter} remaining`);
 
-  if (contacts.length < count && secondaryListId) {
-    console.log(`📥 Fetching fallback from secondary list: ${secondaryListId}`);
-    let secondaryContacts = await getContactsFromList(secondaryListId, (count - contacts.length) * 2);
+  let secondaryContacts = [];
+  let secondaryBeforeFilter = 0;
+  let secondaryAfterFilter = 0;
+  
+  if (primaryAfterFilter < count && secondaryListId) {
+    secondaryContacts = await getContactsFromList(secondaryListId, (count - primaryAfterFilter) * 2);
+    secondaryBeforeFilter = secondaryContacts.length;
     secondaryContacts = secondaryContacts.filter(vid => !usedContactsSet.has(vid));
-    contacts = contacts.concat(secondaryContacts);
-    console.log(`➕ Added ${secondaryContacts.length} more from secondary list`);
+    secondaryAfterFilter = secondaryContacts.length;
+    console.log(`📥 Secondary List: ${secondaryBeforeFilter} available | ${secondaryBeforeFilter - secondaryAfterFilter} filtered | ${secondaryAfterFilter} remaining`);
   }
 
-  const selectedContacts = contacts.slice(0, count);
+  const allContacts = [...primaryContacts, ...secondaryContacts];
+  const selectedContacts = allContacts.slice(0, count);
   selectedContacts.forEach(vid => usedContactsSet.add(vid));
-  console.log(`✂️ Final selected contacts: ${selectedContacts.length} of ${count} requested`);
+  
+  const fulfillmentPercentage = Math.round((selectedContacts.length / count) * 100);
+  console.log(`✂️ Final Selection: ${selectedContacts.length} of ${count} requested (${fulfillmentPercentage}%)`);
 
   const listName = `${brand} - ${campaign} - ${domain} - ${getFormattedDate(date)}`;
 
@@ -207,7 +220,10 @@ const processSingleCampaign = async (config, daysFilter, modeFilter, usedContact
     filterCriteria: { days: daysFilter, mode: modeFilter },
     campaignDetails: { brand, campaign, date },
     contactCount: selectedContacts.length,
-    requestedCount: count
+    requestedCount: count,
+    availableCount: primaryBeforeFilter + secondaryBeforeFilter,
+    filteredCount: (primaryBeforeFilter - primaryAfterFilter) + (secondaryBeforeFilter - secondaryAfterFilter),
+    fulfillmentPercentage
   });
 
   console.log(`✅ List created: ${listName} | ID: ${newList.listId}`);
@@ -218,11 +234,13 @@ const processSingleCampaign = async (config, daysFilter, modeFilter, usedContact
     listId: newList.listId,
     contactCount: selectedContacts.length,
     requestedCount: count,
+    availableCount: primaryBeforeFilter + secondaryBeforeFilter,
+    filteredCount: (primaryBeforeFilter - primaryAfterFilter) + (secondaryBeforeFilter - secondaryAfterFilter),
+    fulfillmentPercentage,
     createdList
   };
 };
 
-// ✅ Run Campaigns with 3-minute Delay
 const processCampaignsWithDelay = async (listConfigs, daysFilter, modeFilter) => {
   const results = [];
   const usedContacts = new Set();
@@ -258,11 +276,19 @@ const processCampaignsWithDelay = async (listConfigs, daysFilter, modeFilter) =>
     }
   }
 
-  console.log(`\n🎯 Campaign run complete | ✅ Success: ${results.filter(r => r.status === 'fulfilled').length}, ❌ Failed: ${results.filter(r => r.status === 'rejected').length}`);
+  const successful = results.filter(r => r.status === 'fulfilled');
+  const failed = results.filter(r => r.status === 'rejected');
+  
+  console.log(`\n🎯 Campaign run complete`);
+  console.log(`✅ Success: ${successful.length}`);
+  console.log(`❌ Failed: ${failed.length}`);
+  console.log(`📊 Total Requested: ${listConfigs.reduce((sum, c) => sum + c.count, 0)}`);
+  console.log(`📊 Total Fulfilled: ${successful.reduce((sum, r) => sum + r.value.contactCount, 0)}`);
+  console.log(`📊 Average Fulfillment: ${Math.round(successful.reduce((sum, r) => sum + r.value.fulfillmentPercentage, 0) / (successful.length || 1))}%`);
+
   return results;
 };
 
-// ✅ Entry Point to Create Lists
 router.post('/create-lists', async (req, res) => {
   const { daysFilter, modeFilter } = req.body;
   console.log(`📨 Received request to create lists | Filters → Days: ${daysFilter}, Mode: ${modeFilter}`);
@@ -279,8 +305,8 @@ router.post('/create-lists', async (req, res) => {
     query.campaign = { $regex: modeFilter === 're-engagement' ? /re-engagement/i : /re-activation/i };
   } else if (modeFilter === 'BAU') {
     query.$and = [
-      { $or: [{ campaign: { $not: { $regex: /re-engagement/i } } }, { campaign: { $exists: false } }] },
-      { $or: [{ campaign: { $not: { $regex: /re-activation/i } } }, { campaign: { $exists: false } }] }
+      { campaign: { $not: { $regex: /re-engagement/i } } },
+      { campaign: { $not: { $regex: /re-activation/i } } }
     ];
   }
 
@@ -295,11 +321,13 @@ router.post('/create-lists', async (req, res) => {
     estimatedCompletionTime: `${Math.ceil(listConfigs.length * INTER_LIST_DELAY_MS / 3600000)} hrs ${Math.ceil((listConfigs.length * INTER_LIST_DELAY_MS % 3600000) / 60000)} mins`
   });
 
-  try {
-    await processCampaignsWithDelay(listConfigs, daysFilter, modeFilter);
-  } catch (error) {
-    console.error('❌ Overall process failed:', error.message);
-  }
+  setImmediate(async () => {
+    try {
+      await processCampaignsWithDelay(listConfigs, daysFilter, modeFilter);
+    } catch (error) {
+      console.error('❌ Overall process failed:', error.message);
+    }
+  });
 });
 
 router.get('/created-lists', async (req, res) => {
