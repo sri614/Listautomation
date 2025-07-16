@@ -114,6 +114,7 @@ footer {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
 .flex{justify-content: start;}
 .flex-box{gap:0px;}
