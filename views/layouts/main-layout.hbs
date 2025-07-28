@@ -92,17 +92,27 @@ document.querySelectorAll(".list-date-span").forEach(el => {
 
 
   // Format created/updated timestamp
-    document.querySelectorAll(".edit-date").forEach(el => {
-      const date = new Date(el.dataset.date);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = String(date.getFullYear()).slice(-2);
-      let hours = date.getHours();
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'pm' : 'am';
-      hours = hours % 12 || 12;
-      el.textContent = `${day}.${month}.${year} ${hours}.${minutes} ${ampm}`;
-    });
+document.querySelectorAll(".edit-date").forEach(el => {
+  document.querySelectorAll(".edit-date").forEach(el => console.log(el.dataset.date));
+  const rawDate = el.dataset.date;
+  if (!rawDate) return;
+
+  const date = new Date(rawDate);
+  if (isNaN(date)) {
+    el.textContent = "Invalid date"; // Debug fallback
+    return;
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12 || 12;
+
+  el.textContent = `${day}.${month}.${year} ${hours}.${minutes} ${ampm}`;
+});
 
 
      // Short campaign name
