@@ -310,7 +310,7 @@ router.post('/create-lists', async (req, res) => {
     ];
   }
 
-  const listConfigs = await Segmentation.find(query).lean();
+  const listConfigs = await Segmentation.find(query).sort({ order: 1 }).lean();
   if (!listConfigs.length) return res.status(404).json({ error: 'No campaigns match the selected filters' });
 
   res.json({
