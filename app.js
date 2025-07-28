@@ -8,6 +8,7 @@ const adminRoutes = require("./routes/adminRoutes.js");
 const hubspotListRoutes = require('./routes/hubspotRoute.js');
 const ClonerRoutes = require('./routes/cloner.js');
 const authRoutes = require('./routes/auth');
+var cors = require('cors')
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
+app.use(cors())
 
 // ✅ Make session.user available to all views as {{user}}
 app.use((req, res, next) => {
