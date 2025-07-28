@@ -328,7 +328,7 @@
         const daysFilter = document.getElementById('daysFilter').value;
         const modeFilter = document.getElementById('modeFilter').value;
 
-        const response = await fetch('http://localhost:8000/api/create-lists', {
+        const response = await fetch('https://listautomation.onrender.com/api/create-lists', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ daysFilter, modeFilter })
